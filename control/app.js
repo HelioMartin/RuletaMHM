@@ -58,7 +58,7 @@ function start() {
   // Reservamos hueco para la barra de acciones fija.
   const dock = document.querySelector('.dock');
   new ResizeObserver(() => {
-    document.querySelector('.ctl').style.setProperty('--dock-h', `${dock.offsetHeight}px`);
+    document.documentElement.style.setProperty('--dock-h', `${dock.offsetHeight}px`);
   }).observe(dock);
   render();
 }

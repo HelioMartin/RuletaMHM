@@ -31,19 +31,24 @@ body {
   padding-bottom: calc(var(--dock-h, 170px) + 16px);
 }
 
-.ctl__head {
+/* Cabecera + contadores anclados arriba */
+.ctl__top {
   position: sticky;
   top: 0;
   z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: max(10px, env(safe-area-inset-top)) 16px 10px;
   background: rgba(18, 10, 4, .94);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   border-bottom: 1px solid rgba(200, 160, 74, .45);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .35);
+}
+.ctl__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: max(10px, env(safe-area-inset-top)) 16px 8px;
+  border-bottom: 1px solid rgba(200, 160, 74, .22);
 }
 .ctl__brand { display: flex; flex-direction: column; min-width: 0; }
 .ctl__title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.3rem; color: var(--brass-hi); white-space: nowrap; }
@@ -58,20 +63,20 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  padding: 12px 16px 4px;
+  padding: 8px 16px 10px;
 }
 .stat {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 4px;
+  padding: 5px 4px;
   border-radius: var(--radius-s);
   background: rgba(241, 234, 219, .06);
   border: 1px solid rgba(200, 160, 74, .22);
   font-family: var(--font-sign);
 }
-.stat b { font-size: 1.7rem; line-height: 1; color: var(--brass-hi); }
-.stat small { font-size: .92rem; color: var(--text-dim); font-weight: 600; }
+.stat b { font-size: 1.45rem; line-height: 1.05; color: var(--brass-hi); }
+.stat small { font-size: .88rem; color: var(--text-dim); font-weight: 600; }
 
 .ctl__main { display: flex; flex-direction: column; gap: 16px; padding: 12px 12px 0; }
 
@@ -148,7 +153,7 @@ body {
 .dock__buttons .btn.is-stop { --btn-bg: linear-gradient(180deg, #F0544F 0%, var(--mhm-red) 55%, #A9151A 100%); color: #fff; }
 
 .toast-error {
-  position: fixed; left: 50%; top: 80px; translate: -50% 0; z-index: 80;
+  position: fixed; left: 50%; bottom: calc(var(--dock-h, 170px) + 12px); translate: -50% 0; z-index: 80;
   width: max-content; max-width: calc(100vw - 24px); padding: 12px 18px; border-radius: 12px;
   background: #5B1210; color: #FFDAD5; box-shadow: var(--shadow-deep); line-height: 1.4;
   animation: fade-up 260ms var(--ease-out) both;
