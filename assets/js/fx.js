@@ -63,119 +63,126 @@ function noise({ at = 0, dur = 0.05, gain = 0.3, freq = 2600, q = 1.2 } = {}) {
 }
 
 // ---------- Ruleta girando con la bolita ----------
-// Tiempos en segundos: la bolita rueda por la pista frenándose, cae, rebota por las
-// casillas y se queda en una mientras el cilindro sigue girando y se apaga.
-const SPIN = { roll: 9, settle: 1.4, tail: 2.6 };
+// La bolita rodando rápido por la pista de madera, a velocidad constante y en bucle
+// mientras dura el "No va más" (sin frenada ni rebotes). Se precalcula un bucle de
+// varias vueltas: rodadura rugosa (muchos micro-golpes + rumor), con el vaivén de
+// cada vuelta y la resonancia hueca del cuenco; en estéreo la bolita da vueltas.
+const SPIN = { lap: 0.46, laps: 8, maxSeconds: 45 };
 
-function noiseBuffer(ac, seconds) {
-  const len = Math.floor(ac.sampleRate * seconds);
-  const buf = ac.createBuffer(1, len, ac.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-  return buf;
+let rollCache = null;
+
+function rollLoop(ac) {
+  if (rollCache && rollCache.sampleRate === ac.sampleRate && rollCache.ctx === ac) return rollCache.buffer;
+  const sr = ac.sampleRate;
+  const lapLen = Math.round(SPIN.lap * sr);
+  const len = lapLen * SPIN.laps;
+  const fade = Math.round(0.04 * sr);
+  const raw = new Float32Array(len + fade);
+  const gritRate = 1600 / sr;
+  let brown = 0;
+  let grit = 0;
+  let seam = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const phase = (i % lapLen) / lapLen;
+    const near = 0.5 + 0.5 * Math.cos(2 * Math.PI * phase); // lado cercano de la pista
+    const env = 0.5 + 0.5 * near ** 1.5;
+    const white = Math.random() * 2 - 1;
+    brown = brown * 0.982 + white * 0.07;
+    if (Math.random() < gritRate) grit += (0.25 + Math.random() ** 2) * (Math.random() < 0.5 ? -1 : 1) * (0.55 + 0.6 * near);
+    grit *= 0.78;
+    // Un pequeño traqueteo por vuelta al pasar por la junta de la pista.
+    if (i % lapLen === Math.round(lapLen * 0.62)) seam = 0.9 + Math.random() * 0.5;
+    seam *= 0.9965;
+    const rattle = seam > 0.02 && Math.random() < 0.08 ? (Math.random() * 2 - 1) * seam : 0;
+    raw[i] = env * (brown * 0.55 + white * 0.12 + grit * 1.35) + rattle * 0.5;
+  }
+  // Fundido cruzado del final con el principio para que el bucle no se note.
+  for (let i = 0; i < fade; i++) {
+    const k = i / fade;
+    raw[i] = raw[i] * k + raw[len + i] * (1 - k);
+  }
+  let peak = 0;
+  for (let i = 0; i < len; i++) peak = Math.max(peak, Math.abs(raw[i]));
+  const buffer = ac.createBuffer(1, len, sr);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = (raw[i] / peak) * 0.9;
+  rollCache = { ctx: ac, sampleRate: sr, buffer };
+  return buffer;
 }
 
-// Golpe seco de la bolita (marfil contra metal o madera).
-function ballClick(ac, dest, at, { gain = 0.3, freq = 3600, q = 4, ping = 2500 } = {}) {
-  const len = Math.floor(ac.sampleRate * 0.03);
-  const buf = ac.createBuffer(1, len, ac.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 4;
-  const src = ac.createBufferSource();
-  src.buffer = buf;
-  const bp = ac.createBiquadFilter();
-  bp.type = 'bandpass';
-  bp.frequency.value = freq;
-  bp.Q.value = q;
-  const g = ac.createGain();
-  g.gain.value = gain;
-  src.connect(bp).connect(g).connect(dest);
-  src.start(at);
-  const osc = ac.createOscillator();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(ping, at);
-  osc.frequency.exponentialRampToValueAtTime(ping * 0.86, at + 0.045);
-  const og = ac.createGain();
-  og.gain.setValueAtTime(0.0001, at);
-  og.gain.exponentialRampToValueAtTime(gain * 0.3, at + 0.002);
-  og.gain.exponentialRampToValueAtTime(0.0001, at + 0.05);
-  osc.connect(og).connect(dest);
-  osc.start(at);
-  osc.stop(at + 0.06);
-}
+// Construye el sonido en cualquier contexto de audio (también en uno offline).
+export function spinGraph(ac, dest, t0 = ac.currentTime, { duration = SPIN.maxSeconds } = {}) {
+  const end = t0 + duration;
+  const env = ac.createGain();
+  env.gain.setValueAtTime(0.0001, t0);
+  env.gain.exponentialRampToValueAtTime(1, t0 + 0.35);
+  env.gain.setValueAtTime(1, Math.max(t0 + 0.35, end - 1.5));
+  env.gain.exponentialRampToValueAtTime(0.0001, end);
+  env.connect(dest);
 
-// Construye el sonido completo en cualquier contexto de audio (también en uno offline).
-export function spinGraph(ac, dest, t0 = ac.currentTime) {
-  const { roll, settle, tail } = SPIN;
-  const end = t0 + roll + settle + tail;
-  const noise = noiseBuffer(ac, 2);
-
-  // 1) La bolita rodando por la pista: siseo que late con cada vuelta y se va frenando.
+  // 1) La bolita: bucle de rodadura con el color de la madera del cuenco.
   const ball = ac.createBufferSource();
-  ball.buffer = noise;
+  ball.buffer = rollLoop(ac);
   ball.loop = true;
-  const hp = ac.createBiquadFilter();
-  hp.type = 'highpass';
-  hp.frequency.value = 700;
-  const bp = ac.createBiquadFilter();
-  bp.type = 'bandpass';
-  bp.Q.value = 1.6;
-  bp.frequency.setValueAtTime(3400, t0);
-  bp.frequency.exponentialRampToValueAtTime(1500, t0 + roll);
-  const lap = ac.createGain();
-  lap.gain.value = 0.55;
-  const lfo = ac.createOscillator();
-  lfo.frequency.setValueAtTime(3.6, t0);
-  lfo.frequency.exponentialRampToValueAtTime(0.9, t0 + roll);
-  const depth = ac.createGain();
-  depth.gain.value = 0.45;
-  lfo.connect(depth).connect(lap.gain);
-  const rollGain = ac.createGain();
-  rollGain.gain.setValueAtTime(0.0001, t0);
-  rollGain.gain.exponentialRampToValueAtTime(0.7, t0 + 0.3);
-  rollGain.gain.linearRampToValueAtTime(0.36, t0 + roll - 0.5);
-  rollGain.gain.exponentialRampToValueAtTime(0.0001, t0 + roll + 0.2);
-  ball.connect(hp).connect(bp).connect(lap).connect(rollGain).connect(dest);
+  const eq = [
+    ['highpass', 170, 0.7, 0],
+    ['peaking', 380, 1.1, 7],
+    ['peaking', 1150, 1.4, 4],
+    ['peaking', 3100, 1.6, 6],
+    ['lowpass', 7500, 0.7, 0],
+  ].map(([type, freq, q, gain]) => {
+    const f = ac.createBiquadFilter();
+    f.type = type;
+    f.frequency.value = freq;
+    f.Q.value = q;
+    f.gain.value = gain;
+    return f;
+  });
+  const ballGain = ac.createGain();
+  ballGain.gain.value = 0.85;
+  let node = ball;
+  for (const f of eq) node = node.connect(f);
+  node = node.connect(ballGain);
+  // En estéreo, la bolita recorre la pista de un lado a otro con cada vuelta.
+  let lfo = null;
+  if (typeof ac.createStereoPanner === 'function') {
+    const pan = ac.createStereoPanner();
+    lfo = ac.createOscillator();
+    lfo.frequency.value = 1 / SPIN.lap;
+    const depth = ac.createGain();
+    depth.gain.value = 0.6;
+    lfo.connect(depth).connect(pan.pan);
+    node.connect(pan).connect(env);
+    lfo.start(t0);
+    lfo.stop(end + 0.05);
+  } else {
+    node.connect(env);
+  }
   ball.start(t0);
-  ball.stop(t0 + roll + 0.3);
-  lfo.start(t0);
-  lfo.stop(t0 + roll + 0.3);
+  ball.stop(end + 0.05);
 
-  // 2) Rumor grave del cilindro de madera, que sigue girando hasta el final.
-  const wheel = ac.createBufferSource();
-  wheel.buffer = noise;
-  wheel.loop = true;
-  wheel.playbackRate.value = 0.7;
-  const lp = ac.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.setValueAtTime(260, t0);
-  lp.frequency.linearRampToValueAtTime(150, end);
-  const wheelGain = ac.createGain();
-  wheelGain.gain.setValueAtTime(0.0001, t0);
-  wheelGain.gain.exponentialRampToValueAtTime(0.7, t0 + 0.5);
-  wheelGain.gain.linearRampToValueAtTime(0.45, t0 + roll + settle);
-  wheelGain.gain.exponentialRampToValueAtTime(0.0001, end);
-  wheel.connect(lp).connect(wheelGain).connect(dest);
-  wheel.start(t0);
-  wheel.stop(end + 0.05);
+  // 2) El cilindro girando: un rumor grave y suave por debajo.
+  const rotorLen = Math.floor(ac.sampleRate * 2);
+  const rotorBuf = ac.createBuffer(1, rotorLen, ac.sampleRate);
+  const rd = rotorBuf.getChannelData(0);
+  let b = 0;
+  for (let i = 0; i < rotorLen; i++) {
+    b = b * 0.995 + (Math.random() * 2 - 1) * 0.05;
+    rd[i] = b;
+  }
+  const rotor = ac.createBufferSource();
+  rotor.buffer = rotorBuf;
+  rotor.loop = true;
+  const rotorLp = ac.createBiquadFilter();
+  rotorLp.type = 'lowpass';
+  rotorLp.frequency.value = 160;
+  const rotorGain = ac.createGain();
+  rotorGain.gain.value = 0.1;
+  rotor.connect(rotorLp).connect(rotorGain).connect(env);
+  rotor.start(t0);
+  rotor.stop(end + 0.05);
 
-  // 3) Toques contra los rombos cuando la bolita empieza a perder velocidad.
-  [0.6, 0.71, 0.8, 0.87, 0.92, 0.96].forEach((k, i) => {
-    ballClick(ac, dest, t0 + roll * k, { gain: 0.12 + i * 0.04, freq: 4300, ping: 3200 });
-  });
-
-  // 4) Cae, rebota por las casillas y se queda en una.
-  const bounces = [0, 0.3, 0.52, 0.68, 0.8, 0.9, 0.98, 1.05, 1.11, 1.16, 1.2, 1.235, 1.262, 1.285];
-  bounces.forEach((dt, i) => {
-    const fade = 1 - i / bounces.length;
-    ballClick(ac, dest, t0 + roll + dt, {
-      gain: 0.07 + 0.75 * fade ** 1.4,
-      freq: 3100 - i * 70,
-      ping: 2350 - i * 45,
-    });
-  });
-
-  return { end, sources: [ball, lfo, wheel] };
+  return { end, sources: [ball, rotor, lfo].filter(Boolean) };
 }
 
 let spin = null;
