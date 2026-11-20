@@ -32,7 +32,6 @@ function qrSVG(text) {
 }
 $('qr-small').innerHTML = qrSVG(joinUrl);
 $('qr-big').innerHTML = qrSVG(joinUrl);
-$('join-url').textContent = joinUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
 // ---------- Esquina: sonido y pantalla completa ----------
 const corner = document.querySelector('.corner');
