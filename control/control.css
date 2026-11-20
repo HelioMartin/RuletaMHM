@@ -1,0 +1,155 @@
+/* Mando del crupier: pensado para el móvil (una columna, acciones abajo) */
+
+body {
+  background-color: #120A04;
+  background-image:
+    var(--felt-texture),
+    radial-gradient(120% 70% at 50% 0%, #2A1A0C 0%, #1A0F06 55%, #120A04 100%);
+}
+
+/* ---------- PIN ---------- */
+
+.gate { min-height: 100dvh; display: grid; place-items: center; padding: 16px; }
+.gate__card { width: min(380px, 100%); padding: 26px 22px; display: flex; flex-direction: column; gap: 16px; align-items: stretch; text-align: center; }
+.gate__logo { width: 150px; margin: 0 auto; background: #fff; padding: 8px 10px; border-radius: 8px; }
+.gate__title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 2rem; color: var(--brass-hi); }
+.gate__field { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.gate__field span { font-family: var(--font-sign); font-weight: 600; color: var(--text-dim); }
+.gate__field input {
+  min-height: 56px; padding: 10px 14px; border-radius: var(--radius-s);
+  border: 1.5px solid rgba(200, 160, 74, .55); background: var(--flour); color: var(--ink);
+  font: 700 1.5rem var(--font-sign); letter-spacing: .3em; text-align: center;
+}
+.gate__error { margin: 0; color: #FFB4A8; font-weight: 600; }
+
+/* ---------- Estructura: una columna de ancho de móvil, también en pantallas grandes ---------- */
+
+.ctl {
+  width: min(560px, 100%);
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding-bottom: calc(var(--dock-h, 170px) + 16px);
+}
+
+.ctl__head {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: max(10px, env(safe-area-inset-top)) 16px 10px;
+  background: rgba(18, 10, 4, .94);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(200, 160, 74, .45);
+}
+.ctl__brand { display: flex; flex-direction: column; min-width: 0; }
+.ctl__title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 1.3rem; color: var(--brass-hi); white-space: nowrap; }
+.ctl__status { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-family: var(--font-sign); flex: none; }
+.ctl__round { font-weight: 800; font-size: 1.2rem; }
+.ctl__phase { padding: 2px 10px; border-radius: 999px; font-weight: 700; font-size: .95rem; background: rgba(240, 212, 136, .15); color: var(--brass-hi); }
+.ctl__phase.is-open { background: #4ADE80; color: #04260F; }
+.ctl__phase.is-closed { background: var(--mhm-red); color: #fff; }
+.ctl__phase.is-result, .ctl__phase.is-finished { background: var(--brass); color: #2A1A07; }
+
+.ctl__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px 16px 4px;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  border-radius: var(--radius-s);
+  background: rgba(241, 234, 219, .06);
+  border: 1px solid rgba(200, 160, 74, .22);
+  font-family: var(--font-sign);
+}
+.stat b { font-size: 1.7rem; line-height: 1; color: var(--brass-hi); }
+.stat small { font-size: .92rem; color: var(--text-dim); font-weight: 600; }
+
+.ctl__main { display: flex; flex-direction: column; gap: 16px; padding: 12px 12px 0; }
+
+.ctl__h2 { margin: 0; font-family: var(--font-sign); font-weight: 700; font-size: 1.35rem; color: var(--brass-hi); }
+.ctl__hint { margin: 4px 0 10px; color: var(--text-dim); line-height: 1.4; }
+
+.ctl__table { padding: 0 2px; }
+.ctl__board.is-pickable .cell--flour,
+.ctl__board.is-pickable .cell--bonus { cursor: pointer; }
+.ctl__board:not(.is-pickable) .cell--flour,
+.ctl__board:not(.is-pickable) .cell--bonus { cursor: default; }
+.ctl__board .cell--group { cursor: default; }
+.ctl__board .cell__count { font-size: 13px; min-width: 22px; }
+.ctl__board.is-pickable .cell--flour:active,
+.ctl__board.is-pickable .cell--bonus:active { filter: brightness(1.15); }
+
+/* ---------- Jugadores ---------- */
+
+.ctl__players { padding: 16px 12px 12px; }
+.plist { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.plist__row {
+  display: grid;
+  grid-template-columns: 30px 28px minmax(0, 1fr) auto 40px;
+  align-items: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 4px 6px 4px 8px;
+  border-radius: var(--radius-s);
+  background: rgba(255, 255, 255, .04);
+  font-family: var(--font-sign);
+}
+.plist__row .chip { position: relative; translate: none; --size: 26px; rotate: none; }
+.plist__row .chip__face { rotate: none; font-size: 9px; }
+.plist__pos { font-weight: 800; color: var(--text-dim); text-align: center; }
+.plist__name { display: flex; flex-direction: column; min-width: 0; }
+.plist__name strong { font-weight: 600; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plist__name small { color: var(--text-dim); font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plist__name small.has-bet { color: #6EE7A0; }
+.plist__pts { font-weight: 800; font-size: 1.2rem; color: var(--brass-hi); }
+.plist__del {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 1px solid rgba(255, 155, 143, .5); background: transparent; color: #FF9B8F;
+  font-size: 1.05rem; cursor: pointer;
+}
+.plist__empty { color: var(--text-dim); line-height: 1.45; padding: 8px 2px; }
+
+/* ---------- Herramientas ---------- */
+
+.ctl__tools { display: flex; flex-direction: column; gap: 10px; padding: 4px 4px 8px; }
+.ctl__tools .btn { text-decoration: none; }
+.ctl__tools .btn--danger { margin-top: 10px; }
+
+/* ---------- Barra de acciones fija ---------- */
+
+.dock {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 30;
+  translate: -50% 0;
+  width: min(560px, 100%);
+  padding: 12px 14px max(14px, env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(26, 15, 6, .96), #120A04);
+  border-top: 1px solid rgba(200, 160, 74, .55);
+  box-shadow: 0 -12px 30px rgba(0, 0, 0, .45);
+  border-radius: 16px 16px 0 0;
+}
+.dock__step { margin: 0 2px 10px; font-size: 1rem; line-height: 1.4; color: var(--text); }
+.dock__step strong { color: var(--brass-hi); font-family: var(--font-sign); font-size: 1.15em; }
+.dock__buttons { display: flex; flex-direction: column; gap: 8px; }
+.dock__buttons .btn { width: 100%; min-height: 62px; font-size: 1.4rem; }
+.dock__buttons .btn--ghost { min-height: 44px; font-size: 1.05rem; }
+.dock__buttons .btn.is-go { --btn-bg: linear-gradient(180deg, #7BF0A8, #2FA35F); color: #04260F; }
+.dock__buttons .btn.is-stop { --btn-bg: linear-gradient(180deg, #F0544F 0%, var(--mhm-red) 55%, #A9151A 100%); color: #fff; }
+
+.toast-error {
+  position: fixed; left: 50%; top: 80px; translate: -50% 0; z-index: 80;
+  width: max-content; max-width: calc(100vw - 24px); padding: 12px 18px; border-radius: 12px;
+  background: #5B1210; color: #FFDAD5; box-shadow: var(--shadow-deep); line-height: 1.4;
+  animation: fade-up 260ms var(--ease-out) both;
+}

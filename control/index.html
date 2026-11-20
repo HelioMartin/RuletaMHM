@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1A0F06">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="robots" content="noindex">
+  <title>Mando del crupier</title>
+  <meta name="description" content="Control remoto de La Ruleta de las Harinas: abrir rondas, cerrar apuestas y marcar el resultado.">
+  <link rel="icon" href="../assets/img/icon-192.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&family=Limelight&display=swap">
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="control.css">
+</head>
+<body>
+  <main id="gate" class="gate">
+    <form id="gate-form" class="gate__card plaque">
+      <img class="gate__logo" src="../assets/img/logo-mhm.jpg" alt="MHM Grupo Harinero">
+      <h1 class="gate__title">Mando del crupier</h1>
+      <label class="gate__field">
+        <span>PIN de crupier</span>
+        <input id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="12" required>
+      </label>
+      <p id="gate-error" class="gate__error" role="alert" hidden>PIN incorrecto. Pídeselo a la organización.</p>
+      <button class="btn btn--block" type="submit">Entrar</button>
+    </form>
+  </main>
+
+  <div id="app" class="ctl" hidden>
+    <header class="ctl__head">
+      <div class="ctl__brand">
+        <h1 class="ctl__title">Mando del crupier</h1>
+        <span id="live" class="live">Conectando…</span>
+      </div>
+      <div class="ctl__status">
+        <span id="round-label" class="ctl__round"></span>
+        <span id="phase" class="ctl__phase"></span>
+      </div>
+    </header>
+
+    <div class="ctl__stats" aria-live="polite">
+      <span class="stat"><b id="n-players">0</b><small>jugadores</small></span>
+      <span class="stat"><b id="n-bets">0</b><small>han apostado</small></span>
+      <span class="stat"><b id="n-pending">0</b><small>sin apostar</small></span>
+    </div>
+
+    <main class="ctl__main">
+      <section class="ctl__table" aria-labelledby="board-title">
+        <h2 id="board-title" class="ctl__h2">¿Dónde ha caído la ruleta?</h2>
+        <p id="board-hint" class="ctl__hint"></p>
+        <div id="board" class="ctl__board"></div>
+      </section>
+
+      <section class="ctl__players plaque" aria-labelledby="players-title">
+        <h2 id="players-title" class="ctl__h2">Jugadores</h2>
+        <ol id="players" class="plist"></ol>
+      </section>
+
+      <section class="ctl__tools" aria-label="Herramientas">
+        <a id="link-mesa" class="btn btn--ghost btn--small" target="_blank" rel="noopener">Abrir la mesa para proyectar</a>
+        <a id="link-jugar" class="btn btn--ghost btn--small" target="_blank" rel="noopener">Abrir la app de jugadores</a>
+        <button id="reset-btn" class="btn btn--danger btn--small" type="button">Reiniciar partida</button>
+      </section>
+    </main>
+
+    <!-- Acciones principales, siempre a mano del pulgar -->
+    <div class="dock">
+      <p id="step-text" class="dock__step"></p>
+      <div id="primary" class="dock__buttons"></div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

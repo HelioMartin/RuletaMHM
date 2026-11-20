@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#062716">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>La Ruleta de las Harinas</title>
+  <meta name="description" content="Apuesta en La Ruleta de las Harinas de MHM Grupo Harinero.">
+  <link rel="icon" href="../assets/img/icon-192.png">
+  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&family=Limelight&display=swap">
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="jugar.css">
+</head>
+<body>
+  <!-- Entrada: nombre y apellido -->
+  <main id="join" class="join" hidden>
+    <div class="join__wheel" id="join-wheel"></div>
+    <div class="join__inner">
+      <img class="join__logo" src="../assets/img/logo-mhm.jpg" alt="MHM Grupo Harinero">
+      <h1 class="join__title">La Ruleta de las Harinas</h1>
+      <p class="join__subtitle">Bienvenidos al Molino de la Suerte</p>
+
+      <form id="join-form" class="join__form plaque" autocomplete="on" novalidate>
+        <p id="join-note" class="join__note" hidden></p>
+        <label class="field">
+          <span>Nombre</span>
+          <input id="first" name="given-name" autocomplete="given-name" maxlength="30" required>
+        </label>
+        <label class="field">
+          <span>Apellido</span>
+          <input id="last" name="family-name" autocomplete="family-name" maxlength="30" required>
+        </label>
+        <p id="join-error" class="join__error" role="alert" hidden></p>
+        <button id="join-btn" class="btn btn--block" type="submit" disabled>Conectando con la mesa…</button>
+      </form>
+
+      <section class="rules" aria-labelledby="rules-title">
+        <h2 id="rules-title" class="rules__title">Cómo se juega</h2>
+        <ul class="rules__list">
+          <li><span class="rules__pts">10</span><span>puntos si aciertas la harina exacta (casillas del centro).</span></li>
+          <li><span class="rules__pts">3</span><span>puntos si apuestas a harina blanca o integral y sale una de ese tipo.</span></li>
+          <li><span class="rules__pts rules__pts--gold">+2</span><span>para todos si la ruleta cae en Semol o Trigo. Ahí no se puede apostar.</span></li>
+        </ul>
+        <p class="rules__foot">Jugamos 10 partidas con una única apuesta por partida. Los 3 jugadores con más puntos ganan un premio.</p>
+      </section>
+    </div>
+  </main>
+
+  <!-- Juego -->
+  <div id="game" class="game" hidden>
+    <header class="hud">
+      <div class="hud__who">
+        <div id="hud-chip" class="chip hud__chip"><span class="chip__face"></span></div>
+        <div class="hud__id">
+          <strong id="hud-name"></strong>
+          <span id="live" class="live">Conectando…</span>
+        </div>
+      </div>
+      <div class="hud__score" aria-live="polite">
+        <span class="hud__points"><span id="hud-points" data-value="0">0</span><small>puntos</small></span>
+        <span id="hud-rank" class="hud__rank"></span>
+      </div>
+    </header>
+
+    <div class="roundbar">
+      <span id="round-label" class="roundbar__round"></span>
+      <span id="phase-label" class="roundbar__phase"></span>
+      <button id="rules-btn" class="roundbar__help" type="button" aria-label="Cómo se juega">?</button>
+    </div>
+
+    <section id="tab-bet" class="tab tab--bet" role="tabpanel" aria-labelledby="tabbtn-bet">
+      <p id="hint" class="hint" aria-live="polite"></p>
+      <div id="board" class="board-host"></div>
+    </section>
+
+    <section id="tab-rank" class="tab tab--rank" role="tabpanel" aria-labelledby="tabbtn-rank" hidden>
+      <div id="me-card" class="me-card plaque"></div>
+      <ol id="ranklist" class="ranklist" aria-label="Clasificación"></ol>
+    </section>
+
+    <div id="betbar" class="betbar">
+      <div id="tray" class="betbar__tray">
+        <div id="tray-chip" class="chip"><span class="chip__face"></span></div>
+      </div>
+      <div class="betbar__info">
+        <span id="bet-title" class="betbar__title"></span>
+        <span id="bet-sub" class="betbar__sub"></span>
+      </div>
+      <button id="confirm-btn" class="btn betbar__btn" type="button" disabled>Confirmar apuesta</button>
+    </div>
+
+    <nav class="tabs" role="tablist" aria-label="Secciones">
+      <button id="tabbtn-bet" class="tabs__btn" role="tab" aria-selected="true" aria-controls="tab-bet" data-tab="bet">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="2.4 2"/></svg>
+        Apuesta
+      </button>
+      <button id="tabbtn-rank" class="tabs__btn" role="tab" aria-selected="false" aria-controls="tab-rank" data-tab="rank">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V11h4v9M10 20V5h4v15M16 20v-6h4v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        Ranking
+      </button>
+    </nav>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

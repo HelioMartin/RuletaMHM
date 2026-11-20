@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#062716">
+  <title>Mesa de juego</title>
+  <meta name="description" content="Pantalla para proyectar La Ruleta de las Harinas: tapete con las fichas en directo y ranking.">
+  <link rel="icon" href="../assets/img/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&family=Limelight&display=swap">
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="mesa.css">
+</head>
+<body>
+  <div class="stage">
+    <header class="marquee">
+      <div class="marquee__bulbs" aria-hidden="true"></div>
+      <h1 class="marquee__title">La Ruleta de las Harinas</h1>
+      <div class="marquee__round">
+        <span id="round-num" class="marquee__num">–</span>
+        <span id="round-of" class="marquee__of"></span>
+      </div>
+      <div id="phase" class="phase"></div>
+    </header>
+
+    <main class="table-area">
+      <div id="board" class="table-area__board"></div>
+      <div id="spin" class="spin" hidden>
+        <div id="spin-wheel" class="spin__wheel"></div>
+        <p class="spin__title">No va más</p>
+        <p class="spin__sub">La ruleta está girando…</p>
+      </div>
+    </main>
+
+    <footer class="rail">
+      <ol id="history" class="history" aria-label="Resultados por ronda"></ol>
+      <div class="rail__stats">
+        <span class="rail__big"><span id="bets-count">0</span><small>/<span id="players-count">0</span></small></span>
+        <span class="rail__label">han apostado</span>
+      </div>
+      <ul id="feed" class="feed" aria-label="Últimas apuestas"></ul>
+    </footer>
+
+    <aside class="side">
+      <div class="side__head">
+        <h2 class="side__title">Clasificación</h2>
+        <span id="rank-page" class="side__page"></span>
+      </div>
+      <ol id="ranking" class="ranking" aria-label="Clasificación"></ol>
+      <div class="join-card">
+        <div id="qr-small" class="join-card__qr"></div>
+        <p class="join-card__text">Escanea<br>y juega</p>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Antes de empezar: código QR grande -->
+  <div id="lobby" class="lobby" hidden>
+    <div class="lobby__wheel" id="lobby-wheel"></div>
+    <div class="lobby__content">
+      <img class="lobby__logo" src="../assets/img/logo-mhm.jpg" alt="MHM Grupo Harinero">
+      <h1 class="lobby__title">La Ruleta de las Harinas</h1>
+      <p class="lobby__subtitle">Bienvenidos al Molino de la Suerte</p>
+      <div class="lobby__join">
+        <div id="qr-big" class="lobby__qr"></div>
+        <div class="lobby__how">
+          <p class="lobby__step">Escanea el código con el móvil</p>
+          <p class="lobby__step">Escribe tu nombre y apellido</p>
+          <p class="lobby__step">Apuesta en cada ronda</p>
+          <p id="join-url" class="lobby__url"></p>
+        </div>
+      </div>
+      <p class="lobby__count"><span id="lobby-count">0</span> <span id="lobby-count-label">jugadores en la mesa</span></p>
+      <div id="lobby-names" class="lobby__names" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- Podio final -->
+  <div id="podium" class="podium-screen" hidden></div>
+
+  <div class="corner">
+    <button id="sound-btn" class="corner__btn" type="button">Activar sonido</button>
+    <button id="fs-btn" class="corner__btn" type="button" aria-label="Pantalla completa">Pantalla completa</button>
+    <span id="live" class="live">Conectando…</span>
+  </div>
+
+  <script src="../assets/vendor/qrcode.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

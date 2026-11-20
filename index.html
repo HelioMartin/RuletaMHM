@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#062716">
+  <title>La Ruleta de las Harinas</title>
+  <meta name="description" content="Las tres pantallas de La Ruleta de las Harinas de MHM Grupo Harinero.">
+  <link rel="icon" href="assets/img/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&family=Limelight&display=swap">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <style>
+    .hub { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: 40px 16px; text-align: center; }
+    .hub__logo { width: 170px; background: #fff; padding: 8px 12px; border-radius: 8px; box-shadow: 0 0 0 3px var(--brass), var(--shadow-deep); }
+    .hub__title { margin: 22px 0 6px; font-family: var(--font-display); font-weight: 400; font-size: clamp(2.4rem, 8vw, 4.2rem); line-height: 1; color: var(--brass-hi); text-shadow: 0 3px 0 rgba(0,0,0,.35); }
+    .hub__sub { margin: 0 0 32px; font-family: var(--font-sign); font-size: 1.3rem; color: var(--text-dim); }
+    .doors { display: grid; gap: 14px; width: min(980px, 100%); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .door { display: flex; flex-direction: column; gap: 10px; padding: 22px 20px; text-align: left; text-decoration: none; color: inherit; transition: transform var(--press) var(--ease-out); }
+    .door:active { transform: scale(.98); }
+    .door h2 { margin: 0; font-family: var(--font-sign); font-weight: 800; font-size: 1.6rem; color: var(--brass-hi); }
+    .door p { margin: 0; color: var(--text-dim); line-height: 1.45; }
+    .door span { margin-top: auto; font-family: var(--font-sign); font-weight: 700; color: var(--flour); }
+  </style>
+</head>
+<body>
+  <main class="hub">
+    <img class="hub__logo" src="assets/img/logo-mhm.jpg" alt="MHM Grupo Harinero">
+    <h1 class="hub__title">La Ruleta de las Harinas</h1>
+    <p class="hub__sub">Bienvenidos al Molino de la Suerte</p>
+    <nav class="doors" aria-label="Pantallas del juego">
+      <a class="door plaque" href="jugar/">
+        <h2>Jugar</h2>
+        <p>Para los invitados: entra con tu nombre, pon tu ficha y sigue el ranking desde el móvil.</p>
+        <span>Abrir la app de jugadores</span>
+      </a>
+      <a class="door plaque" href="mesa/">
+        <h2>Mesa</h2>
+        <p>Para proyectar en la sala: el tapete con las fichas en directo, el ranking y el código QR.</p>
+        <span>Abrir la mesa</span>
+      </a>
+      <a class="door plaque" href="control/">
+        <h2>Mando del crupier</h2>
+        <p>Para los crupieres: abrir rondas, cerrar apuestas y marcar lo que ha salido en la ruleta.</p>
+        <span>Abrir el mando</span>
+      </a>
+    </nav>
+  </main>
+</body>
+</html>
