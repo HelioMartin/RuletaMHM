@@ -30,7 +30,7 @@ Con GitHub Pages activado, las direcciones son:
 3. Los invitados escanean el QR que aparece en la mesa y escriben su nombre y apellido.
 4. En el mando: **Abrir ronda 1**. Los móviles de los invitados avisan y pueden poner su ficha y confirmar. Cada ficha confirmada aparece al momento en la mesa.
 5. Antes de girar la ruleta: **No va más**. En la mesa aparece la ruleta girando y, con el sonido activado, suena la bola girando en bucle.
-6. Cuando la ruleta se pare, toca en el tapete del mando la casilla donde ha caído y confírmalo. Durante 9 segundos la bola frena, cae y se para en todas las pantallas, sin desvelar nada. Después el resultado se anuncia a la vez en la mesa y en todos los móviles, y el ranking se actualiza con las subidas y bajadas de puesto. El mando no deja abrir la siguiente ronda hasta que termina esa espera.
+6. Cuando la ruleta se pare, toca en el tapete del mando la casilla donde ha caído y confírmalo. Durante 4 segundos la bola frena, cae y se para en todas las pantallas, sin desvelar nada. Después el resultado se anuncia a la vez en la mesa y en todos los móviles, y el ranking se actualiza con las subidas y bajadas de puesto. El mando no deja abrir la siguiente ronda hasta que termina esa espera.
 7. **Abrir ronda 2**, y así hasta la 10. Al final, **Terminar y mostrar el podio**.
 
 Si te equivocas al marcar un resultado, usa **Deshacer resultado**. Desde el mando también puedes retirar a un jugador (nombres duplicados o de prueba) y **Reiniciar partida** después de los ensayos.

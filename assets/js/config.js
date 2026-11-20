@@ -21,7 +21,7 @@ export const CONFIG = {
 
   // Segundos de espera ("la bola está cayendo") desde que el crupier marca el resultado
   // hasta que se anuncia en la mesa y en los móviles. Coincide con el final del sonido.
-  revealDelay: 9,
+  revealDelay: 4,
 
   // PIN del mando de los crupieres. Es un filtro para invitados curiosos, no una
   // contraseña segura: cualquiera que lea este archivo puede verlo.
