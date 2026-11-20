@@ -5,6 +5,7 @@ import {
   renderBoard, paintChips, CELLS, createChip, escapeHTML, groupName, shortName, wheelSVG,
 } from '../assets/js/board.js';
 import { standingsWithMovement, PHASE_TEXT } from '../assets/js/game.js';
+import { Suspense, entryId, REVEAL_DELAY_MS } from '../assets/js/suspense.js';
 import {
   sound, showReveal, closeReveal, banner, flip, rain, burst,
 } from '../assets/js/fx.js';
@@ -43,9 +44,13 @@ $('sound-btn').addEventListener('click', () => {
   sound.muted = !soundOn;
   $('sound-btn').textContent = soundOn ? 'Silenciar' : 'Activar sonido';
   corner.classList.remove('is-attention');
-  if (soundOn) sound.confirm();
+  if (soundOn) {
+    sound.preloadSpin();
+    sound.confirm();
+  }
   // Si se activa el sonido con la ruleta ya girando, que se oiga la bolita.
-  if (soundOn && link.state.phase === 'closed') sound.spinStart({ delay: 0.3 });
+  const v = suspense.view(link.state);
+  if (soundOn && v.phase === 'closed' && !v.falling) sound.spinStart({ delay: 0.3 });
 });
 sound.muted = true;
 let idleTimer = null;
@@ -79,6 +84,36 @@ let lastKey = null;
 let lastPhase = null;
 let firstPaint = true;
 
+// Al marcar el resultado, la bola cae unos segundos antes de anunciarlo.
+const suspense = new Suspense((entry) => {
+  resetWheel();
+  revealResult(entry);
+  render();
+});
+
+// La ruleta del "No va más" frena hasta pararse mientras la bola cae.
+function rotor() {
+  return document.querySelector('#spin-wheel .wheel__rotor');
+}
+function slowWheel(ms) {
+  const el = rotor();
+  if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const css = el.getAnimations().find((a) => a.animationName === 'spin-wheel');
+  const angle = css ? ((Number(css.currentTime) || 0) % 1500) / 1500 * 360 : 0;
+  el.classList.add('is-stopping');
+  el.animate([{ transform: `rotate(${angle}deg)` }, { transform: `rotate(${angle + 620}deg)` }], {
+    duration: ms,
+    easing: 'cubic-bezier(0.12, 0.55, 0.25, 1)',
+    fill: 'forwards',
+  });
+}
+function resetWheel() {
+  const el = rotor();
+  if (!el) return;
+  el.classList.remove('is-stopping');
+  el.getAnimations().forEach((a) => { if (!a.animationName) a.cancel(); });
+}
+
 function announce() {
   const s = link.state;
   const key = `${s.epoch}:${s.round}:${s.phase}:${s.history.length}`;
@@ -88,11 +123,28 @@ function announce() {
   lastKey = key;
   lastPhase = s.phase;
 
-  $('lobby').hidden = s.phase !== 'lobby';
-  $('spin').hidden = s.phase !== 'closed';
-  if (s.phase !== 'finished') $('podium').hidden = true;
-  if (s.phase !== 'result') closeReveal();
-  if (s.phase !== 'closed') sound.spinStop();
+  // Resultado recién marcado en directo: la bola cae y luego se anuncia.
+  if (s.phase === 'result' && s.history.length) {
+    const entry = s.history[s.history.length - 1];
+    const id = entryId(s, entry);
+    if (seenGet() !== id) {
+      seenSet(id);
+      if (!initial && (prevPhase === 'open' || prevPhase === 'closed')) {
+        suspense.hold(s, entry);
+        sound.spinFinish(REVEAL_DELAY_MS / 1000);
+        slowWheel(REVEAL_DELAY_MS);
+      } else {
+        revealResult(entry);
+      }
+    }
+  }
+
+  const v = suspense.view(s);
+  if (v.phase !== 'result') closeReveal();
+  if (v.phase !== 'closed') {
+    sound.spinStop();
+    resetWheel();
+  }
 
   if (s.phase === 'open' && !initial) {
     banner(`Ronda ${s.round}: hagan sus apuestas`);
@@ -100,16 +152,9 @@ function announce() {
   }
   // Gong y ruleta girando solo al cerrar de verdad las apuestas (no al deshacer un resultado).
   if (s.phase === 'closed' && !initial && prevPhase === 'open') {
+    resetWheel();
     sound.close();
     sound.spinStart({ delay: 0.7 });
-  }
-  if (s.phase === 'result' && s.history.length) {
-    const entry = s.history[s.history.length - 1];
-    const id = `${s.epoch}:${entry.round}:${entry.outcome}`;
-    if (seenGet() !== id) {
-      seenSet(id);
-      revealResult(entry);
-    }
   }
   if (s.phase === 'finished') showPodium(!initial);
 }
@@ -186,7 +231,7 @@ function showPodium(celebrate) {
 
 // ---------- Datos ----------
 function standings() {
-  return standingsWithMovement(link.state, link.activePlayers());
+  return standingsWithMovement(suspense.view(link.state), link.activePlayers());
 }
 
 link.on('ready', () => { announce(); render(); });
@@ -200,11 +245,17 @@ const seenNames = new Set();
 let lastChipSound = 0;
 
 function paint() {
-  const s = link.state;
+  const s = suspense.view(link.state);
   const players = link.activePlayers();
   const bets = link.activeBets();
   const rows = standings();
   const last = s.history[s.history.length - 1];
+
+  // Capas: bienvenida, ruleta girando o cayendo, podio
+  $('lobby').hidden = s.phase !== 'lobby';
+  $('spin').hidden = s.phase !== 'closed';
+  $('spin-sub').textContent = s.falling ? 'La bola está cayendo…' : 'La ruleta está girando…';
+  if (s.phase !== 'finished') $('podium').hidden = true;
 
   // Cabecera
   $('round-num').textContent = s.round > 0 ? `Ronda ${s.round}` : 'Bienvenida';
@@ -251,7 +302,7 @@ function paintFeed(bets, fresh) {
   const feed = $('feed');
   const recent = [...bets].sort((a, b) => b[1].at - a[1].at).slice(0, 3);
   if (!recent.length) {
-    const s = link.state;
+    const s = suspense.view(link.state);
     feed.innerHTML = `<li class="feed__empty">${s.phase === 'open' ? 'Esperando las primeras apuestas…' : s.phase === 'lobby' ? 'La partida empieza en breve.' : ''}</li>`;
     return;
   }

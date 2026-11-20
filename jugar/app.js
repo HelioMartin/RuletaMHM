@@ -5,6 +5,7 @@ import {
   renderBoard, CELLS, createChip, chipColor, initials, chipSpot, escapeHTML, groupName, wheelSVG,
 } from '../assets/js/board.js';
 import { standingsWithMovement, describeGain, PHASE_TEXT } from '../assets/js/game.js';
+import { Suspense, entryId } from '../assets/js/suspense.js';
 import {
   sound, showReveal, closeReveal, banner, burst, flip, countTo, confirmDialog, rain,
 } from '../assets/js/fx.js';
@@ -34,6 +35,13 @@ let nudgeUntil = 0;
 
 const link = new GameLink('jugador').connect();
 const render = scheduler(paint);
+
+// Al marcar el resultado, la bola cae unos segundos antes de anunciarlo (igual que en la mesa).
+const suspense = new Suspense((entry) => {
+  showResult(entry);
+  render();
+});
+const view = () => suspense.view(link.state);
 
 // ---------- Tablero ----------
 const { board, cells } = renderBoard($('board'), { orientation: 'portrait', logos: false });
@@ -176,10 +184,12 @@ function announce(initial) {
 
   if (s.phase === 'result' && s.history.length) {
     const entry = s.history[s.history.length - 1];
-    const id = `${s.epoch}:${entry.round}:${entry.outcome}`;
+    const id = entryId(s, entry);
     if (seen !== id) {
       local.set(KEY_SEEN, id);
-      showResult(entry);
+      const prevPhase = before?.split(':')[2];
+      if (!initial && (prevPhase === 'open' || prevPhase === 'closed')) suspense.hold(s, entry);
+      else showResult(entry);
     }
     return;
   }
@@ -206,7 +216,7 @@ function announce(initial) {
 }
 
 function standings() {
-  return standingsWithMovement(link.state, link.activePlayers());
+  return standingsWithMovement(view(), link.activePlayers());
 }
 
 function showResult(entry) {
@@ -274,7 +284,7 @@ board.addEventListener('click', (ev) => {
   if (!cellEl || cellEl.disabled || !me) return;
   sound.unlock();
   const id = cellEl.dataset.cell;
-  const s = link.state;
+  const s = view();
   if (s.phase !== 'open') {
     const msg = {
       lobby: 'La partida aún no ha empezado. Podrás apostar cuando el crupier abra la ronda 1.',
@@ -409,7 +419,7 @@ $('rules-btn').addEventListener('click', () => {
 // ---------- Pintado ----------
 function paint() {
   if (!me || $('game').hidden) return;
-  const s = link.state;
+  const s = view();
   const bet = myBet();
   const rows = standings();
   const mine = rows.find((r) => r.pid === me.pid);
@@ -481,7 +491,7 @@ function paint() {
     sub = bet ? `Si sale, ganas ${pays} puntos` : 'Esta ronda no has apostado';
     btn.textContent = 'No va más';
     btn.disabled = true;
-    hint = 'No va más. La ruleta está girando…';
+    hint = s.falling ? 'La bola está cayendo…' : 'No va más. La ruleta está girando…';
   } else if (s.phase === 'result') {
     const d = last ? describeGain(last, me.pid) : null;
     title = last ? `Salió ${CELLS[last.outcome]?.label ?? ''}` : '';

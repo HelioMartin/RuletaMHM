@@ -185,7 +185,52 @@ export function spinGraph(ac, dest, t0 = ac.currentTime, { duration = SPIN.maxSe
   return { end, sources: [ball, rotor, lfo].filter(Boolean) };
 }
 
-let spin = null;
+// ---------- Sonido real de la ruleta (si está en assets/audio) ----------
+// ruleta-giro.wav: bucle de la bola girando. ruleta-final.mp3: la bola frena, cae y se para.
+// Si no se pueden cargar, se usa el sonido sintetizado de arriba.
+const SAMPLE_URLS = [
+  new URL('../audio/ruleta-giro.wav', import.meta.url),
+  new URL('../audio/ruleta-final.mp3', import.meta.url),
+];
+let samples = null;
+
+function loadSamples(ac) {
+  if (!samples) {
+    samples = Promise.all(SAMPLE_URLS.map(async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return ac.decodeAudioData(await res.arrayBuffer());
+    }))
+      .then(([loop, end]) => ({ loop, end }))
+      .catch(() => null);
+  }
+  return samples;
+}
+
+// Sonidos de giro en curso: el bucle mientras gira y el final cuando se marca el resultado.
+const spinning = new Set();
+
+function fadeOutHandle(handle, seconds = 0.2) {
+  spinning.delete(handle);
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  handle.stopped = true;
+  handle.out.gain.cancelScheduledValues(t);
+  handle.out.gain.setValueAtTime(Math.max(handle.out.gain.value, 0.0001), t);
+  handle.out.gain.exponentialRampToValueAtTime(0.0001, t + seconds);
+  for (const src of handle.sources) {
+    try { src.stop(t + seconds + 0.05); } catch { /* ya parada */ }
+  }
+  setTimeout(() => handle.out.disconnect(), (seconds + 0.3) * 1000);
+}
+
+function newHandle(ac, kind) {
+  const out = ac.createGain();
+  out.connect(master);
+  const handle = { kind, out, sources: [], stopped: false };
+  spinning.add(handle);
+  return handle;
+}
 
 export const sound = {
   unlock() { audio(); },
@@ -195,34 +240,67 @@ export const sound = {
     try { localStorage.setItem('ruleta-muted', muted ? '1' : '0'); } catch { /* sin almacenamiento */ }
     if (muted) sound.spinStop();
   },
-  // La ruleta girando con la bolita (mientras dura el "No va más").
+  // Carga por adelantado el sonido real de la ruleta.
+  preloadSpin() {
+    const ac = audio();
+    if (ac) loadSamples(ac);
+  },
+  // La bola girando, en bucle, mientras dura el "No va más".
   spinStart({ delay = 0 } = {}) {
     const ac = audio();
     if (!ac || muted) return;
     sound.spinStop();
-    const out = ac.createGain();
-    out.connect(master);
-    const graph = spinGraph(ac, out, ac.currentTime + delay);
-    const current = { out, ...graph };
-    spin = current;
-    setTimeout(() => {
-      if (spin === current) spin = null;
-      out.disconnect();
-    }, (graph.end - ac.currentTime + 0.6) * 1000);
+    const handle = newHandle(ac, 'loop');
+    const startAt = ac.currentTime + delay;
+    loadSamples(ac).then((smp) => {
+      if (handle.stopped) return;
+      const t0 = Math.max(ac.currentTime, startAt);
+      if (smp) {
+        const src = ac.createBufferSource();
+        src.buffer = smp.loop;
+        src.loop = true;
+        const g = ac.createGain();
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(1, t0 + 0.4);
+        src.connect(g).connect(handle.out);
+        src.start(t0);
+        handle.sources.push(src);
+        // Por seguridad, si nadie marca resultado se apaga sola a los 45 s.
+        handle.out.gain.setValueAtTime(1, t0 + 43);
+        handle.out.gain.exponentialRampToValueAtTime(0.0001, t0 + 45);
+        src.stop(t0 + 45.1);
+      } else {
+        handle.sources.push(...spinGraph(ac, handle.out, t0).sources);
+      }
+    });
   },
-  // Corta el giro con un fundido corto (p. ej. cuando el crupier marca el resultado).
+  // El crupier ha marcado el resultado: la bola frena, cae y se para.
+  spinFinish(seconds) {
+    const ac = audio();
+    if (!ac || muted) return;
+    for (const h of [...spinning]) fadeOutHandle(h, 0.35);
+    const handle = newHandle(ac, 'finish');
+    loadSamples(ac).then((smp) => {
+      if (handle.stopped) return;
+      const t0 = ac.currentTime;
+      if (smp) {
+        const src = ac.createBufferSource();
+        src.buffer = smp.end;
+        const g = ac.createGain();
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(1, t0 + 0.15);
+        src.connect(g).connect(handle.out);
+        src.start(t0);
+        handle.sources.push(src);
+        src.onended = () => spinning.delete(handle);
+      } else {
+        handle.sources.push(...spinGraph(ac, handle.out, t0, { duration: seconds }).sources);
+      }
+    });
+  },
+  // Corta cualquier giro con un fundido corto.
   spinStop() {
-    if (!spin || !ctx) return;
-    const { out, sources } = spin;
-    spin = null;
-    const t = ctx.currentTime;
-    out.gain.cancelScheduledValues(t);
-    out.gain.setValueAtTime(Math.max(out.gain.value, 0.0001), t);
-    out.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
-    for (const src of sources) {
-      try { src.stop(t + 0.25); } catch { /* ya parada */ }
-    }
-    setTimeout(() => out.disconnect(), 400);
+    for (const h of [...spinning]) fadeOutHandle(h, 0.2);
   },
   // Ficha sobre el tapete: dos golpes secos.
   chip() {
