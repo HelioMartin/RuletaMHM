@@ -44,6 +44,8 @@ $('sound-btn').addEventListener('click', () => {
   $('sound-btn').textContent = soundOn ? 'Silenciar' : 'Activar sonido';
   corner.classList.remove('is-attention');
   if (soundOn) sound.confirm();
+  // Si se activa el sonido con la ruleta ya girando, que se oiga la bolita.
+  if (soundOn && link.state.phase === 'closed') sound.spinStart({ delay: 0.3 });
 });
 sound.muted = true;
 let idleTimer = null;
@@ -74,6 +76,7 @@ link.on('connection', (on) => {
 
 // ---------- Cambios de fase ----------
 let lastKey = null;
+let lastPhase = null;
 let firstPaint = true;
 
 function announce() {
@@ -81,18 +84,25 @@ function announce() {
   const key = `${s.epoch}:${s.round}:${s.phase}:${s.history.length}`;
   if (key === lastKey) return;
   const initial = lastKey === null;
+  const prevPhase = lastPhase;
   lastKey = key;
+  lastPhase = s.phase;
 
   $('lobby').hidden = s.phase !== 'lobby';
   $('spin').hidden = s.phase !== 'closed';
   if (s.phase !== 'finished') $('podium').hidden = true;
   if (s.phase !== 'result') closeReveal();
+  if (s.phase !== 'closed') sound.spinStop();
 
   if (s.phase === 'open' && !initial) {
     banner(`Ronda ${s.round}: hagan sus apuestas`);
     sound.open();
   }
-  if (s.phase === 'closed' && !initial) sound.close();
+  // Gong y ruleta girando solo al cerrar de verdad las apuestas (no al deshacer un resultado).
+  if (s.phase === 'closed' && !initial && prevPhase === 'open') {
+    sound.close();
+    sound.spinStart({ delay: 0.7 });
+  }
   if (s.phase === 'result' && s.history.length) {
     const entry = s.history[s.history.length - 1];
     const id = `${s.epoch}:${entry.round}:${entry.outcome}`;
