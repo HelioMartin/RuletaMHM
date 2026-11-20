@@ -6,6 +6,7 @@ import {
 } from '../assets/js/board.js';
 import { standingsWithMovement, PHASE_TEXT } from '../assets/js/game.js';
 import { sound, banner, confirmDialog } from '../assets/js/fx.js';
+import { REVEAL_DELAY_MS } from '../assets/js/suspense.js';
 
 const $ = (id) => document.getElementById(id);
 const KEY_STATE = `ruleta-control-state:${CONFIG.namespace}`;
@@ -255,8 +256,8 @@ $('players').addEventListener('click', (ev) => {
 $('reset-btn').addEventListener('click', () => actions.reset());
 
 // ---------- Pintado ----------
-function button(action, label, cls = '') {
-  return `<button type="button" class="btn ${cls}" data-action="${action}">${escapeHTML(label)}</button>`;
+function button(action, label, cls = '', disabled = false) {
+  return `<button type="button" class="btn ${cls}" data-action="${action}"${disabled ? ' disabled' : ''}>${escapeHTML(label)}</button>`;
 }
 
 function paint() {
@@ -297,12 +298,20 @@ function paint() {
     const detail = o?.kind === 'bonus'
       ? `Bonus: +${CONFIG.points.bonus} puntos para todos.`
       : `${count} ${count === 1 ? 'acierto' : 'aciertos'} exactos y ${groupCount} de ${groupName(o?.group).toLowerCase()}.`;
-    step = `<strong>Ronda ${s.round}: ha salido ${escapeHTML(o?.label ?? '')}.</strong> ${detail}`;
-    html = s.round < s.totalRounds
-      ? button('openRound', `Abrir ronda ${s.round + 1}`, 'is-go')
-      : button('finish', 'Terminar y mostrar el podio', 'is-go');
+    // Mientras la bola cae en las pantallas, el resultado aún no se ha anunciado.
+    const wait = last?.at ? Math.ceil((last.at + REVEAL_DELAY_MS - Date.now()) / 1000) : 0;
+    const falling = wait > 0;
+    step = falling
+      ? `<strong>La bola está cayendo en las pantallas…</strong> El resultado (${escapeHTML(o?.label ?? '')}) se anuncia en ${wait} s.`
+      : `<strong>Ronda ${s.round}: ha salido ${escapeHTML(o?.label ?? '')}.</strong> ${detail}`;
+    const next = s.round < s.totalRounds ? `Abrir ronda ${s.round + 1}` : 'Terminar y mostrar el podio';
+    html = button(s.round < s.totalRounds ? 'openRound' : 'finish', falling ? `${next} (${wait} s)` : next, 'is-go', falling);
     html += button('undoResult', 'Deshacer resultado', 'btn--ghost');
-    hint = 'Resultado anunciado en todas las pantallas.';
+    hint = falling ? 'Espera a que se anuncie antes de seguir.' : 'Resultado anunciado en todas las pantallas.';
+    if (falling) {
+      clearTimeout(paint.timer);
+      paint.timer = setTimeout(render, 1000);
+    }
   } else if (s.phase === 'finished') {
     step = '<strong>Partida terminada.</strong> El podio está en la pantalla. Si hay empate en los premios, podéis jugar una ronda extra.';
     html = button('extraRound', 'Ronda extra de desempate', 'is-go') + button('undoResult', 'Volver al último resultado', 'btn--ghost');

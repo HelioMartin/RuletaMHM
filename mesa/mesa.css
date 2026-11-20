@@ -113,6 +113,7 @@ body { font-size: 1.9vh; }
 .spin__wheel { width: min(48cqh, 40cqw); aspect-ratio: 1; filter: drop-shadow(0 2vh 3vh rgba(0, 0, 0, .55)); }
 .spin__wheel .wheel { width: 100%; height: 100%; }
 .spin__wheel .wheel__rotor { transform-box: fill-box; transform-origin: center; animation: spin-wheel 1.5s linear infinite; }
+.spin__wheel .wheel__rotor.is-stopping { animation: none; }
 .spin__wheel .wheel__bulb { fill: #FFE9A3; animation: bulb-chase 1s linear infinite; animation-delay: calc(var(--i) * -25ms); }
 @keyframes spin-wheel { to { transform: rotate(360deg); } }
 @keyframes bulb-chase {

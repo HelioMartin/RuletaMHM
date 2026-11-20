@@ -29,8 +29,8 @@ Con GitHub Pages activado, las direcciones son:
 2. Abre el **mando** en el móvil del crupier e introduce el PIN.
 3. Los invitados escanean el QR que aparece en la mesa y escriben su nombre y apellido.
 4. En el mando: **Abrir ronda 1**. Los móviles de los invitados avisan y pueden poner su ficha y confirmar. Cada ficha confirmada aparece al momento en la mesa.
-5. Antes de girar la ruleta: **No va más**.
-6. Cuando la ruleta se pare, toca en el tapete del mando la casilla donde ha caído y confírmalo. El resultado se anuncia a la vez en la mesa y en todos los móviles, y el ranking se actualiza con las subidas y bajadas de puesto.
+5. Antes de girar la ruleta: **No va más**. En la mesa aparece la ruleta girando y, con el sonido activado, suena la bola girando en bucle.
+6. Cuando la ruleta se pare, toca en el tapete del mando la casilla donde ha caído y confírmalo. Durante 4 segundos la bola frena, cae y se para en todas las pantallas, sin desvelar nada. Después el resultado se anuncia a la vez en la mesa y en todos los móviles, y el ranking se actualiza con las subidas y bajadas de puesto. El mando no deja abrir la siguiente ronda hasta que termina esa espera.
 7. **Abrir ronda 2**, y así hasta la 10. Al final, **Terminar y mostrar el podio**.
 
 Si te equivocas al marcar un resultado, usa **Deshacer resultado**. Desde el mando también puedes retirar a un jugador (nombres duplicados o de prueba) y **Reiniciar partida** después de los ensayos.
@@ -54,6 +54,7 @@ Todo está en [`assets/js/config.js`](assets/js/config.js):
 - `brokerUrl`: servidor de tiempo real. Si la wifi del local bloquea el puerto 8084, prueba `wss://mqtt.eclipseprojects.io:443/mqtt`. Todos los dispositivos tienen que usar el mismo.
 - `namespace`: nombre único de la sala. Cámbialo para empezar en limpio.
 - `totalRounds`, `points`: número de partidas y puntos.
+- `revealDelay`: segundos de espera entre marcar el resultado y anunciarlo. Coincide con la duración de `assets/audio/ruleta-final.mp3`.
 - `controlPin`: PIN del mando. Sirve para frenar a invitados curiosos, pero no es una contraseña segura, porque cualquiera puede leer este archivo.
 
 Para probar sin tocar la partida real, añade `?sala=prueba1` a las tres direcciones (los enlaces y el QR conservan el parámetro).
@@ -76,5 +77,7 @@ python3 -m http.server 8080
 ```
 
 Abre `http://localhost:8080/`. Para no usar el servidor público, puedes levantar un broker MQTT local con WebSocket y añadir `?broker=ws://localhost:8888&sala=dev` a las URLs.
+
+El sonido de la ruleta está en `assets/audio/`. `ruleta-giro.wav` es el bucle de la bola girando, y `ruleta-final.mp3` es la bola frenando, cayendo y parándose. Ambos se recortaron del efecto de sonido que aportó la organización. Si faltan, la mesa usa un sonido sintetizado.
 
 Librerías incluidas en `assets/vendor/`: [MQTT.js](https://github.com/mqttjs/MQTT.js) (MIT) y [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT).
