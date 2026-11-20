@@ -33,21 +33,24 @@
   </main>
 
   <div id="app" class="ctl" hidden>
-    <header class="ctl__head">
-      <div class="ctl__brand">
-        <h1 class="ctl__title">Mando del crupier</h1>
-        <span id="live" class="live">Conectando…</span>
-      </div>
-      <div class="ctl__status">
-        <span id="round-label" class="ctl__round"></span>
-        <span id="phase" class="ctl__phase"></span>
-      </div>
-    </header>
+    <!-- Cabecera fija: estado de la ronda y de los jugadores siempre a la vista -->
+    <div class="ctl__top">
+      <header class="ctl__head">
+        <div class="ctl__brand">
+          <h1 class="ctl__title">Mando del crupier</h1>
+          <span id="live" class="live">Conectando…</span>
+        </div>
+        <div class="ctl__status">
+          <span id="round-label" class="ctl__round"></span>
+          <span id="phase" class="ctl__phase"></span>
+        </div>
+      </header>
 
-    <div class="ctl__stats" aria-live="polite">
-      <span class="stat"><b id="n-players">0</b><small>jugadores</small></span>
-      <span class="stat"><b id="n-bets">0</b><small>han apostado</small></span>
-      <span class="stat"><b id="n-pending">0</b><small>sin apostar</small></span>
+      <div class="ctl__stats" aria-live="polite">
+        <span class="stat"><b id="n-players">0</b><small>jugadores</small></span>
+        <span class="stat"><b id="n-bets">0</b><small>han apostado</small></span>
+        <span class="stat"><b id="n-pending">0</b><small>sin apostar</small></span>
+      </div>
     </div>
 
     <main class="ctl__main">
