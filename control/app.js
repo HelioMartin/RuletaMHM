@@ -188,6 +188,35 @@ const actions = {
     });
     sound.open();
   },
+  // Quita la ficha confirmada de un jugador para que pueda volver a apostar (solo con la ronda abierta).
+  async clearBet(pid) {
+    const s = link.state;
+    const bet = link.activeBets().get(pid);
+    if (s.phase !== 'open') {
+      showError('Solo se puede anular una apuesta mientras la ronda está abierta.');
+      return;
+    }
+    if (!bet) return;
+    const name = link.players().get(pid)?.name ?? bet.name ?? 'este jugador';
+    const ok = await confirmDialog({
+      title: `¿Anular la apuesta de ${name}?`,
+      text: `Se quitará su ficha de ${CELLS[bet.cell]?.label ?? 'la casilla'}. Podrá volver a apostar mientras la ronda siga abierta.`,
+      confirm: 'Anular apuesta',
+    });
+    if (!ok) return;
+    const now = link.state;
+    if (now.phase !== 'open' || now.round !== s.round) {
+      showError('La ronda ya se ha cerrado: la apuesta no se ha anulado.');
+      return;
+    }
+    const { round } = now;
+    commit((n) => {
+      const perRound = { ...(n.voids?.[round] ?? {}) };
+      perRound[pid] = (perRound[pid] ?? 0) + 1;
+      n.voids = { ...(n.voids ?? {}), [round]: perRound };
+    });
+    link.clearBet(round, pid).catch(() => showError('No se ha podido quitar la ficha. Revisa la conexión.'));
+  },
   async removePlayer(pid) {
     const name = link.players().get(pid)?.name ?? 'este jugador';
     const ok = await confirmDialog({
@@ -250,10 +279,20 @@ $('primary').addEventListener('click', (ev) => {
   actions[btn.dataset.action]();
 });
 $('players').addEventListener('click', (ev) => {
+  const clear = ev.target.closest('[data-clear]');
+  if (clear) return actions.clearBet(clear.dataset.clear);
   const btn = ev.target.closest('[data-remove]');
   if (btn) actions.removePlayer(btn.dataset.remove);
 });
 $('reset-btn').addEventListener('click', () => actions.reset());
+
+// Buscador de jugadores: sin distinguir mayúsculas ni tildes, por cualquier parte del nombre.
+const normalizar = (text) => text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+let busqueda = [];
+$('player-search').addEventListener('input', (ev) => {
+  busqueda = normalizar(ev.target.value).split(/\s+/).filter(Boolean);
+  render();
+});
 
 // ---------- Pintado ----------
 function button(action, label, cls = '', disabled = false) {
@@ -342,19 +381,33 @@ function paint() {
 }
 
 function paintPlayers(players, bets) {
-  const rows = standingsWithMovement(link.state, players);
-  if (!rows.length) {
+  const all = standingsWithMovement(link.state, players);
+  const rows = busqueda.length
+    ? all.filter((r) => { const n = normalizar(r.name); return busqueda.every((w) => n.includes(w)); })
+    : all;
+  $('players-count').textContent = busqueda.length ? `${rows.length} de ${all.length}` : `${all.length}`;
+  if (!all.length) {
     $('players').innerHTML = '<li class="plist__empty">Todavía no hay nadie. Proyecta la mesa para que los invitados escaneen el código QR.</li>';
     return;
   }
+  if (!rows.length) {
+    $('players').innerHTML = '<li class="plist__empty">Nadie coincide con esa búsqueda. Prueba con otra parte del nombre.</li>';
+    return;
+  }
+  const open = link.state.phase === 'open';
   $('players').innerHTML = rows.map((r) => {
     const bet = bets.get(r.pid);
-    const betText = bet ? `Apuesta: ${CELLS[bet.cell]?.label}` : link.state.phase === 'open' ? 'Sin apostar' : '';
+    const betText = bet ? `Apuesta: ${CELLS[bet.cell]?.label}` : open ? 'Sin apostar' : '';
+    // Anular la apuesta solo tiene sentido con la ronda abierta y una ficha confirmada.
+    const clear = open && bet
+      ? `<button class="plist__clear" type="button" data-clear="${escapeHTML(r.pid)}" aria-label="Anular la apuesta de ${escapeHTML(r.name)}">Anular</button>`
+      : '<span class="plist__clear-slot" aria-hidden="true"></span>';
     return `<li class="plist__row">
       <span class="plist__pos">${r.rank}</span>
       ${createChip(r.pid, r.name).outerHTML}
       <span class="plist__name"><strong>${escapeHTML(r.name)}</strong><small class="${bet ? 'has-bet' : ''}">${escapeHTML(betText)}</small></span>
       <span class="plist__pts">${r.points}</span>
+      ${clear}
       <button class="plist__del" type="button" data-remove="${escapeHTML(r.pid)}" aria-label="Retirar a ${escapeHTML(r.name)}">✕</button>
     </li>`;
   }).join('');

@@ -20,8 +20,15 @@ export const DEFAULT_STATE = Object.freeze({
   phase: 'lobby',
   history: [],
   removed: [],
+  // Apuestas anuladas por el crupier: { ronda: { jugador: veces } }.
+  voids: {},
   updatedAt: 0,
 });
+
+// Cuántas veces ha anulado el crupier la apuesta de un jugador en una ronda.
+export function voidCount(state, round, pid) {
+  return state?.voids?.[round]?.[pid] ?? 0;
+}
 
 export function randomId(len = 10) {
   const abc = 'abcdefghijkmnpqrstuvwxyz23456789';

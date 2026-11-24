@@ -1,0 +1,17 @@
+{
+  "name": "ruleta-mhm",
+  "private": true,
+  "description": "La Ruleta de las Harinas: pruebas automáticas de las tres web apps",
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 \"tests/*.test.mjs\"",
+    "test:anular": "node --test tests/anular-apuesta.test.mjs",
+    "test:carga": "node --test tests/carga-150.test.mjs"
+  },
+  "devDependencies": {
+    "aedes": "0.51.3",
+    "aedes-server-factory": "0.2.1",
+    "mqtt": "5.10.1",
+    "playwright": "1.63.0"
+  }
+}

@@ -61,7 +61,15 @@
       </section>
 
       <section class="ctl__players plaque" aria-labelledby="players-title">
-        <h2 id="players-title" class="ctl__h2">Jugadores</h2>
+        <div class="plist__head">
+          <h2 id="players-title" class="ctl__h2">Jugadores</h2>
+          <span id="players-count" class="plist__count" aria-live="polite"></span>
+        </div>
+        <label class="search">
+          <span class="sr-only">Buscar jugador</span>
+          <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          <input id="player-search" type="search" placeholder="Buscar por nombre o apellido" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+        </label>
         <ol id="players" class="plist"></ol>
       </section>
 
