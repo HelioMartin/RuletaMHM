@@ -6,7 +6,7 @@ body { font-size: 1.9vh; }
 .stage {
   height: 100vh;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(320px, 27vw, 640px);
+  grid-template-columns: minmax(0, 1fr) clamp(360px, 33vw, 760px);
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas:
     "head side"
@@ -54,7 +54,7 @@ body { font-size: 1.9vh; }
   text-overflow: ellipsis;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: 4.5vh;
+  font-size: 4vh;
   line-height: 1.1;
   padding-left: .6vw;
   white-space: nowrap;
@@ -66,7 +66,7 @@ body { font-size: 1.9vh; }
 .marquee__of { font-weight: 600; font-size: 2.6vh; color: var(--text-dim); }
 .phase {
   flex: none;
-  min-width: 13vw;
+  min-width: 11vw;
   padding: 1vh 1.4vw;
   border-radius: 999px;
   text-align: center;
@@ -137,7 +137,8 @@ body { font-size: 1.9vh; }
 .rail {
   grid-area: rail;
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
+  grid-template-columns: auto auto;
+  justify-content: space-between;
   align-items: center;
   gap: 1.6vw;
   padding: 1.2vh 1.4vw;
@@ -175,13 +176,6 @@ body { font-size: 1.9vh; }
 .rail__big small { font-size: 2.6vh; color: var(--text-dim); font-weight: 700; }
 .rail__label { font-size: 1.7vh; color: var(--text-dim); font-weight: 600; }
 
-.feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .4vh; overflow: hidden; }
-.feed__item { display: flex; align-items: center; gap: .6vw; height: 2.6vh; font-family: var(--font-sign); font-size: 1.95vh; white-space: nowrap; }
-.feed__item .chip { position: relative; translate: none; --size: 2.6vh; flex: none; }
-.feed__item b { color: var(--brass-hi); }
-.feed__item.is-new { animation: feed-in 420ms var(--ease-out) both; }
-@keyframes feed-in { from { opacity: 0; transform: translateX(-2vw); } to { opacity: 1; transform: none; } }
-.feed__empty { color: var(--text-dim); font-size: 1.9vh; }
 
 /* ---------- Clasificación ---------- */
 
@@ -199,7 +193,9 @@ body { font-size: 1.9vh; }
 .side__title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 3.6vh; color: var(--brass-hi); }
 .side__page { font-family: var(--font-sign); font-size: 1.8vh; color: var(--text-dim); }
 
-.ranking { list-style: none; margin: 0; padding: 0; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: .55vh; overflow: hidden; }
+.ranking { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: .55vh; overflow: hidden; }
+.ranking__top, .ranking__rest { list-style: none; margin: 0; padding: 0; }
+.ranking__top { display: flex; flex-direction: column; gap: .55vh; }
 .rk {
   display: grid;
   grid-template-columns: 4.4vh 3.2vh minmax(0, 1fr) auto auto 5.6vh;
@@ -231,6 +227,31 @@ body { font-size: 1.9vh; }
 .rk.is-top3 .rk__pos { background: linear-gradient(180deg, #F2B98A, #A8662F); }
 .rk.is-gainer { box-shadow: inset 0 0 0 .2vh rgba(240, 212, 136, .55); }
 .ranking__divider { flex: none; height: .2vh; margin: .5vh 0; background: linear-gradient(90deg, transparent, rgba(240, 212, 136, .5), transparent); }
+
+/* Del 4º en adelante: dos columnas que se rellenan de arriba abajo */
+.ranking__rest {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows, 10), 3.9vh);
+  grid-auto-flow: column;
+  gap: .55vh .6vw;
+}
+.ranking__rest .rk {
+  display: flex;
+  align-items: center;
+  gap: .45vw;
+  height: 3.9vh;
+  padding: 0 .55vw;
+  font-size: 2.05vh;
+}
+.ranking__rest .rk__pos { flex: none; width: 3.2vh; font-size: 1.9vh; }
+.ranking__rest .rk .chip { flex: none; --size: 2.5vh; }
+.ranking__rest .rk .chip__face { font-size: .85vh; }
+.ranking__rest .rk__name { flex: 1; min-width: 0; }
+.ranking__rest .rk__move { flex: none; min-width: 0; font-size: 1.5vh; }
+.ranking__rest .rk__move:empty { display: none; }
+.ranking__rest .rk__gain { flex: none; font-size: 1.5vh; padding: .1vh .4vw; }
+.ranking__rest .rk__pts { flex: none; min-width: 3.2vh; font-size: 2.3vh; }
 .ranking__empty { color: var(--text-dim); font-size: 2.2vh; line-height: 1.4; padding: 2vh .6vw; }
 .ranking__page { display: flex; flex-direction: column; gap: .55vh; animation: fade-in 400ms var(--ease-out) both; }
 

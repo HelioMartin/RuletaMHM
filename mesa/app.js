@@ -291,24 +291,10 @@ function paint() {
   // Contadores y últimas apuestas
   $('bets-count').textContent = bets.size;
   $('players-count').textContent = players.size;
-  paintFeed(bets, fresh);
   paintHistory(s);
   paintRanking(rows, s);
   paintLobby(players);
   firstPaint = false;
-}
-
-function paintFeed(bets, fresh) {
-  const feed = $('feed');
-  const recent = [...bets].sort((a, b) => b[1].at - a[1].at).slice(0, 3);
-  if (!recent.length) {
-    const s = suspense.view(link.state);
-    feed.innerHTML = `<li class="feed__empty">${s.phase === 'open' ? 'Esperando las primeras apuestas…' : s.phase === 'lobby' ? 'La partida empieza en breve.' : ''}</li>`;
-    return;
-  }
-  feed.innerHTML = recent.map(([pid, bet]) => `
-    <li class="feed__item${fresh.has(pid) ? ' is-new' : ''}">${createChip(pid, bet.name).outerHTML}
-      <span>${escapeHTML(shortName(bet.name))} apuesta a <b>${escapeHTML(CELLS[bet.cell]?.label ?? '')}</b></span></li>`).join('');
 }
 
 let historyLen = 0;
@@ -339,6 +325,10 @@ setInterval(() => {
   }
 }, 9000);
 
+// Alto de fila y separación (en vh) de las dos columnas del ranking.
+const REST_ROW = 3.9;
+const REST_GAP = 0.55;
+
 function rowHTML(r, s, pinned) {
   const move = r.delta > 0 ? `<span class="rk__move is-up">▲${r.delta}</span>`
     : r.delta < 0 ? `<span class="rk__move is-down">▼${-r.delta}</span>` : '<span class="rk__move"></span>';
@@ -347,7 +337,7 @@ function rowHTML(r, s, pinned) {
   return `<li class="rk${top}${showGain ? ' is-gainer' : ''}" data-key="${escapeHTML(r.pid)}">
     <span class="rk__pos">${r.rank}</span>
     ${createChip(r.pid, r.name).outerHTML}
-    <span class="rk__name">${escapeHTML(r.name)}</span>
+    <span class="rk__name" title="${escapeHTML(r.name)}">${escapeHTML(r.name)}</span>
     ${move}
     <span class="rk__gain">${showGain ? `+${r.last}` : ''}</span>
     <span class="rk__pts">${r.points}</span>
@@ -357,26 +347,32 @@ function rowHTML(r, s, pinned) {
 function paintRanking(rows, s) {
   const list = $('ranking');
   if (!rows.length) {
-    list.innerHTML = '<li class="ranking__empty">Aún no hay jugadores. Escanea el código QR para sentarte a la mesa.</li>';
+    list.innerHTML = '<p class="ranking__empty">Aún no hay jugadores. Escanea el código QR para sentarte a la mesa.</p>';
     $('rank-page').textContent = '';
     rankPages = 1;
     return;
   }
+  // Los 3 primeros, a todo el ancho; del 4º en adelante, en dos columnas que se leen
+  // hacia abajo (primero la izquierda) y que pasan de página si no caben todos.
   const vh = innerHeight / 100;
   const pinned = rows.slice(0, 3);
   const rest = rows.slice(3);
-  const free = list.clientHeight - pinned.length * (6.55 * vh) - (rest.length ? 1.4 * vh : 0);
-  const cap = Math.max(1, Math.floor(free / (4.85 * vh)));
+  const free = list.clientHeight - pinned.length * (6.55 * vh) - (rest.length ? 1.6 * vh : 0);
+  const perCol = Math.max(1, Math.floor((free + REST_GAP * vh) / ((REST_ROW + REST_GAP) * vh)));
+  const cap = perCol * 2;
   rankPages = Math.max(1, Math.ceil(rest.length / cap));
   if (rankPage >= rankPages) rankPage = 0;
   const pageRows = rest.slice(rankPage * cap, rankPage * cap + cap);
+  const rowsThisPage = Math.min(perCol, Math.ceil(pageRows.length / 2));
   $('rank-page').textContent = rankPages > 1
     ? `${rows.length} jugadores, página ${rankPage + 1} de ${rankPages}`
     : `${rows.length} ${rows.length === 1 ? 'jugador' : 'jugadores'}`;
   flip(list, '.rk', () => {
-    list.innerHTML = pinned.map((r) => rowHTML(r, s, true)).join('')
-      + (rest.length ? '<li class="ranking__divider" aria-hidden="true"></li>' : '')
-      + pageRows.map((r) => rowHTML(r, s, false)).join('');
+    list.innerHTML = `<ol class="ranking__top">${pinned.map((r) => rowHTML(r, s, true)).join('')}</ol>`
+      + (rest.length
+        ? `<div class="ranking__divider" aria-hidden="true"></div>
+           <ol class="ranking__rest" start="${4 + rankPage * cap}" style="--rows:${rowsThisPage}">${pageRows.map((r) => rowHTML(r, s, false)).join('')}</ol>`
+        : '');
   });
 }
 
