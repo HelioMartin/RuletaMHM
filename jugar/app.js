@@ -1,6 +1,6 @@
 // App del jugador: entrar con nombre y apellido, apostar y ver el ranking.
 import { CONFIG } from '../assets/js/config.js';
-import { GameLink, scheduler, randomId } from '../assets/js/net.js';
+import { GameLink, scheduler, randomId, voidCount } from '../assets/js/net.js';
 import {
   renderBoard, CELLS, createChip, chipColor, initials, chipSpot, escapeHTML, groupName, wheelSVG,
 } from '../assets/js/board.js';
@@ -119,9 +119,27 @@ function myBet() {
   if (!me) return null;
   const fromBroker = link.bets().get(me.pid);
   if (fromBroker) return fromBroker.cell;
+  const saved = savedBet();
+  return saved ? saved.cell : null;
+}
+
+// Copia local de la apuesta confirmada, si sigue valiendo: misma partida, misma ronda y
+// el crupier no la ha anulado después (contador de anulaciones igual que al apostar).
+function savedBet() {
   const saved = local.get(KEY_BET);
-  if (saved && saved.epoch === link.epoch && saved.round === link.state.round) return saved.cell;
-  return null;
+  if (!saved || saved.epoch !== link.epoch || saved.round !== link.state.round) return null;
+  if ((saved.voids ?? 0) !== voidCount(link.state, saved.round, me.pid)) return null;
+  return saved;
+}
+
+// El crupier ha anulado nuestra apuesta: fuera la ficha y a elegir otra vez.
+function onBetVoided() {
+  local.set(KEY_BET, null);
+  selection = null;
+  myChip?.remove();
+  banner('El crupier ha anulado tu apuesta');
+  nudge('Tu apuesta se ha anulado. Elige otra casilla y confírmala.');
+  if (navigator.vibrate) navigator.vibrate([40, 40, 40]);
 }
 
 function isRemoved() {
@@ -139,9 +157,8 @@ function checkSeat() {
   }
   // Re-publicamos el alta y la apuesta por si el servidor las hubiera perdido.
   if (!link.players().has(me.pid)) link.register(me.pid, me.name).catch(() => {});
-  const saved = local.get(KEY_BET);
-  if (saved && saved.epoch === link.epoch && saved.round === link.state.round && !link.bets().has(me.pid)
-      && ['open', 'closed'].includes(link.state.phase)) {
+  const saved = savedBet();
+  if (saved && !link.bets().has(me.pid) && ['open', 'closed'].includes(link.state.phase)) {
     link.placeBet(saved.round, me.pid, saved.cell, me.name).catch(() => {});
   }
   if ($('game').hidden) enterGame();
@@ -165,6 +182,8 @@ link.on('state', ({ prev }) => {
   if (!link.ready) return;
   if (prev.epoch !== link.state.epoch || (link.state.removed ?? []).length !== (prev.removed ?? []).length) checkSeat();
   if (prev.round !== link.state.round) selection = null;
+  if (me && prev.epoch === link.state.epoch && prev.round === link.state.round
+      && voidCount(link.state, link.state.round, me.pid) > voidCount(prev, prev.round, me.pid)) onBetVoided();
   announce(false);
   render();
 });
@@ -377,7 +396,7 @@ $('confirm-btn').addEventListener('click', async () => {
   const cell = selection;
   try {
     await link.placeBet(round, me.pid, cell, me.name);
-    local.set(KEY_BET, { epoch: link.epoch, round, cell });
+    local.set(KEY_BET, { epoch: link.epoch, round, cell, voids: voidCount(link.state, round, me.pid) });
     selection = null;
     sound.confirm();
     if (navigator.vibrate) navigator.vibrate(30);

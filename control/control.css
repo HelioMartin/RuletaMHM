@@ -99,7 +99,7 @@ body {
 .plist { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .plist__row {
   display: grid;
-  grid-template-columns: 30px 28px minmax(0, 1fr) auto 40px;
+  grid-template-columns: 26px 26px minmax(0, 1fr) auto 62px 38px;
   align-items: center;
   gap: 8px;
   min-height: 50px;
@@ -116,6 +116,13 @@ body {
 .plist__name small { color: var(--text-dim); font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .plist__name small.has-bet { color: #6EE7A0; }
 .plist__pts { font-weight: 800; font-size: 1.2rem; color: var(--brass-hi); }
+.plist__clear {
+  height: 36px; padding: 0 8px; border-radius: 999px;
+  border: 1px solid rgba(240, 212, 136, .6); background: rgba(240, 212, 136, .1); color: var(--brass-hi);
+  font: 700 .92rem var(--font-sign); cursor: pointer;
+  transition: transform var(--press) var(--ease-out);
+}
+.plist__clear:active { transform: scale(.96); }
 .plist__del {
   width: 38px; height: 38px; border-radius: 50%;
   border: 1px solid rgba(255, 155, 143, .5); background: transparent; color: #FF9B8F;

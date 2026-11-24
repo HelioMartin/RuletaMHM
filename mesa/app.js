@@ -265,8 +265,8 @@ function paint() {
 
   // Fichas: animamos solo las que llegan nuevas
   const fresh = new Set();
-  for (const [pid] of bets) {
-    const key = `${s.epoch}:${s.round}:${pid}`;
+  for (const [pid, bet] of bets) {
+    const key = `${s.epoch}:${s.round}:${pid}:${bet.cell}:${bet.at}`;
     if (!seenBets.has(key)) {
       seenBets.add(key);
       if (!firstPaint) fresh.add(pid);
