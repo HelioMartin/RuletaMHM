@@ -33,7 +33,7 @@ Con GitHub Pages activado, las direcciones son:
 6. Cuando la ruleta se pare, toca en el tapete del mando la casilla donde ha caído y confírmalo. Durante 4 segundos la bola frena, cae y se para en todas las pantallas, sin desvelar nada. Después el resultado se anuncia a la vez en la mesa y en todos los móviles, y el ranking se actualiza con las subidas y bajadas de puesto. El mando no deja abrir la siguiente ronda hasta que termina esa espera.
 7. **Abrir ronda 2**, y así hasta la 10. Al final, **Terminar y mostrar el podio**.
 
-Si te equivocas al marcar un resultado, usa **Deshacer resultado**. Desde el mando también puedes retirar a un jugador (nombres duplicados o de prueba) y **Reiniciar partida** después de los ensayos.
+Si te equivocas al marcar un resultado, usa **Deshacer resultado**. Mientras la ronda está abierta, el botón **Anular** de la lista de jugadores quita la ficha que ya confirmó alguien para que pueda volver a apostar; por ejemplo, si se equivocó de casilla. Desde el mando también puedes retirar a un jugador (nombres duplicados o de prueba) y **Reiniciar partida** después de los ensayos.
 
 ## Cómo funciona
 
@@ -69,6 +69,33 @@ En el repositorio: **Settings → Pages → Build and deployment → Source: Dep
 2. Entra como jugador desde dos móviles, uno con wifi y otro con datos.
 3. Haz una ronda completa: abrir, apostar, "No va más", resultado.
 4. En el mando, pulsa **Reiniciar partida** para borrar el ensayo.
+
+## Pruebas automáticas
+
+Las pruebas arrancan su propio servidor web y un servidor MQTT local, así que no tocan la partida real.
+
+```bash
+npm install
+npx playwright install chromium
+npm test
+```
+
+- `tests/anular-apuesta.test.mjs`: el crupier anula una apuesta confirmada y el jugador vuelve a apostar. Cubre el caso en directo y el caso con el móvil desconectado, y comprueba que con las apuestas cerradas no se puede anular.
+- `tests/carga-150.test.mjs`: 150 personas juegan a la vez con 1 crupier y la mesa durante 3 rondas: harina exacta, bonus e integral. 8 jugadores usan la app real en el navegador y el resto son bots que hablan con el servidor igual que la app. La prueba comprueba lo siguiente:
+  - que todas las altas y apuestas llegan a la mesa y al mando;
+  - que se puede anular una apuesta con la sala llena;
+  - que nadie ve el resultado durante la caída de la bola;
+  - que puntos y puestos coinciden con el reglamento;
+  - que las páginas no se bloquean y que no hay errores.
+
+  Puedes cambiar las cifras: `JUGADORES=300 NAVEGADORES=8 npm run test:carga`.
+
+Las capturas y el resumen de tiempos se guardan en `tests/salida/`. Estos son los resultados en local con 150 jugadores:
+- la última apuesta tarda unos 0,1 s en verse en la mesa y en el mando;
+- el anuncio sale a los 4,2 s de marcar el resultado;
+- ninguna página se queda bloqueada más de 0,15 s.
+
+Con 300 jugadores también pasa. Estas pruebas no miden los límites del servidor público (`broker.emqx.io`), así que el ensayo con móviles reales sigue siendo necesario.
 
 ## Desarrollo local
 
