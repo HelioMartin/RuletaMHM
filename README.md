@@ -5,7 +5,7 @@ Juego de ruleta para la comida de empresa de MHM Grupo Harinero. La ruleta es f�
 | App | Ruta | Quién la usa | Dispositivo |
 |---|---|---|---|
 | Jugar | `/jugar/` | Invitados: entran con nombre y apellido, apuestan y ven el ranking | Móvil |
-| Mesa | `/mesa/` | Se proyecta en la sala: tapete con las fichas en directo, ranking, código QR | Portátil + proyector |
+| Mesa | `/mesa/` | Se proyecta en la sala: tapete con las fichas en directo, ranking (los 3 primeros arriba y el resto en dos columnas que pasan de página), código QR | Portátil + proyector |
 | Mando del crupier | `/control/` | Crupieres: abrir ronda, "No va más", marcar el resultado | Móvil |
 
 Con GitHub Pages activado, las direcciones son:
@@ -33,7 +33,7 @@ Con GitHub Pages activado, las direcciones son:
 6. Cuando la ruleta se pare, toca en el tapete del mando la casilla donde ha caído y confírmalo. Durante 4 segundos la bola frena, cae y se para en todas las pantallas, sin desvelar nada. Después el resultado se anuncia a la vez en la mesa y en todos los móviles, y el ranking se actualiza con las subidas y bajadas de puesto. El mando no deja abrir la siguiente ronda hasta que termina esa espera.
 7. **Abrir ronda 2**, y así hasta la 10. Al final, **Terminar y mostrar el podio**.
 
-Si te equivocas al marcar un resultado, usa **Deshacer resultado**. Mientras la ronda está abierta, el botón **Anular** de la lista de jugadores quita la ficha que ya confirmó alguien para que pueda volver a apostar; por ejemplo, si se equivocó de casilla. Desde el mando también puedes retirar a un jugador (nombres duplicados o de prueba) y **Reiniciar partida** después de los ensayos.
+Si te equivocas al marcar un resultado, usa **Deshacer resultado**. Mientras la ronda está abierta, el botón **Anular** de la lista de jugadores quita la ficha que ya confirmó alguien para que pueda volver a apostar; por ejemplo, si se equivocó de casilla. Con muchos jugadores, usa el buscador encima de la lista: busca por cualquier parte del nombre o del apellido, sin importar mayúsculas ni tildes. Desde el mando también puedes retirar a un jugador (nombres duplicados o de prueba) y **Reiniciar partida** después de los ensayos.
 
 ## Cómo funciona
 

@@ -96,6 +96,37 @@ body {
 /* ---------- Jugadores ---------- */
 
 .ctl__players { padding: 16px 12px 12px; }
+.plist__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.plist__count { font-family: var(--font-sign); font-weight: 600; color: var(--text-dim); }
+
+/* Buscador de jugadores */
+.search {
+  position: relative;
+  display: block;
+  margin-top: 12px;
+}
+.search__icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  translate: 0 -50%;
+  color: var(--brass);
+  pointer-events: none;
+}
+.search input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px 10px 44px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(200, 160, 74, .55);
+  background: rgba(241, 234, 219, .96);
+  color: var(--ink);
+  font: 600 16px var(--font-body); /* 16px: iOS no hace zoom al escribir */
+}
+.search input::placeholder { color: rgba(38, 24, 11, .5); }
+.search input:focus { outline: 3px solid var(--brass-hi); outline-offset: 1px; }
 .plist { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .plist__row {
   display: grid;

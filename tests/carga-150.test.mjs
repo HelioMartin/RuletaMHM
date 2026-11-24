@@ -116,6 +116,11 @@ test(`${TOTAL} jugadores a la vez con 1 crupier y la mesa`, { timeout: 300_000 }
         if (num === 1) {
           // Con la sala llena, el crupier anula la apuesta de un jugador y este reapuesta
           const pid = pidReal[0];
+          // Busca al jugador por parte del nombre, sin mayúsculas
+          const [nom, ape] = NOMBRES_REALES[0];
+          await mando.fill('#player-search', `${nom.toLowerCase()} ${ape.slice(0, 3).toLowerCase()}`);
+          await esperarEn(mando, () => document.querySelectorAll('#players .plist__row').length === 1, null, { que: 'búsqueda de un jugador' });
+          assert.equal(await contar(mando, '#players-count'), `1 de ${TOTAL}`);
           await mando.click(`#players [data-clear="${pid}"]`);
           await mando.click('.modal [data-ok]');
           await esperarEn(mesa, (n) => document.querySelector('#bets-count').textContent === String(n), TOTAL - 1, { que: 'ficha anulada fuera de la mesa' });
@@ -126,6 +131,19 @@ test(`${TOTAL} jugadores a la vez con 1 crupier y la mesa`, { timeout: 300_000 }
           await esperarEn(mesa, (n) => document.querySelector('#bets-count').textContent === String(n), TOTAL, { que: 'nueva ficha en la mesa' });
           await mesa.screenshot({ path: path.join(SALIDA, 'carga-mesa-fichas.png') });
           await mando.screenshot({ path: path.join(SALIDA, 'carga-mando.png') });
+
+          // Sin tildes: "alvaro" encuentra a todos los Álvaro
+          await mando.fill('#player-search', 'alvaro');
+          await esperarEn(mando, () => {
+            const n = [...document.querySelectorAll('#players .plist__name strong')].map((el) => el.textContent);
+            return n.length > 0 && n.every((x) => x.startsWith('Álvaro'));
+          }, null, { que: 'búsqueda sin tildes' });
+          const nombres = await mando.$$eval('#players .plist__name strong', (els) => els.map((el) => el.textContent));
+          assert.ok(nombres.length > 0 && nombres.every((n) => n.startsWith('Álvaro')), 'encuentra los Álvaro');
+          await mando.locator('#player-search').scrollIntoViewIfNeeded();
+          await mando.screenshot({ path: path.join(SALIDA, 'carga-mando-buscador.png') });
+          await mando.fill('#player-search', '');
+          await esperarEn(mando, (n) => document.querySelectorAll('#players .plist__row').length === n, TOTAL, { que: 'lista completa otra vez' });
         }
 
         await accionMando(mando, 'closeBets');
@@ -177,13 +195,29 @@ test(`${TOTAL} jugadores a la vez con 1 crupier y la mesa`, { timeout: 300_000 }
         }
         const maximo = Math.max(...total.values());
         assert.equal(filas[0].pts, maximo, 'el primero de la mesa es el que más puntos tiene');
+        // Los 3 primeros a todo el ancho y el resto en dos columnas, de arriba abajo
+        assert.equal(await mesa.locator('#ranking .ranking__top .rk').count(), 3, 'tres filas fijas arriba');
+        const cols = await mesa.$$eval('#ranking .ranking__rest .rk', (els) => els.map((el) => ({
+          x: Math.round(el.getBoundingClientRect().left),
+          pos: Number(el.querySelector('.rk__pos').textContent),
+        })));
+        const xs = [...new Set(cols.map((c) => c.x))].sort((a, b) => a - b);
+        assert.equal(xs.length, 2, 'el resto va en dos columnas');
+        const izq = cols.filter((c) => c.x === xs[0]).map((c) => c.pos);
+        const der = cols.filter((c) => c.x === xs[1]).map((c) => c.pos);
+        assert.ok(Math.max(...izq) <= Math.min(...der), 'primero se llena la columna izquierda');
         const pagina = await contar(mesa, '#rank-page');
         assert.match(pagina, new RegExp(`${TOTAL} jugadores, página \\d+ de \\d+`), 'el ranking pasa páginas');
 
         // El mando lista a los 150 con los mismos puntos
         const filasMando = await mando.$$eval('#players .plist__row', (els) => els.length);
         assert.equal(filasMando, TOTAL);
-        if (num === RONDAS.length) await mesa.screenshot({ path: path.join(SALIDA, 'carga-mesa-anuncio.png') });
+        if (num === RONDAS.length) {
+          await mesa.screenshot({ path: path.join(SALIDA, 'carga-mesa-anuncio.png') });
+          // Captura del ranking sin el anuncio delante
+          await mesa.evaluate(() => document.querySelectorAll('.reveal, .fx-canvas').forEach((el) => el.remove()));
+          await mesa.screenshot({ path: path.join(SALIDA, 'carga-mesa-ranking.png') });
+        }
       });
     }
 

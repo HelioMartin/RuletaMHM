@@ -286,6 +286,14 @@ $('players').addEventListener('click', (ev) => {
 });
 $('reset-btn').addEventListener('click', () => actions.reset());
 
+// Buscador de jugadores: sin distinguir mayúsculas ni tildes, por cualquier parte del nombre.
+const normalizar = (text) => text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+let busqueda = [];
+$('player-search').addEventListener('input', (ev) => {
+  busqueda = normalizar(ev.target.value).split(/\s+/).filter(Boolean);
+  render();
+});
+
 // ---------- Pintado ----------
 function button(action, label, cls = '', disabled = false) {
   return `<button type="button" class="btn ${cls}" data-action="${action}"${disabled ? ' disabled' : ''}>${escapeHTML(label)}</button>`;
@@ -373,9 +381,17 @@ function paint() {
 }
 
 function paintPlayers(players, bets) {
-  const rows = standingsWithMovement(link.state, players);
-  if (!rows.length) {
+  const all = standingsWithMovement(link.state, players);
+  const rows = busqueda.length
+    ? all.filter((r) => { const n = normalizar(r.name); return busqueda.every((w) => n.includes(w)); })
+    : all;
+  $('players-count').textContent = busqueda.length ? `${rows.length} de ${all.length}` : `${all.length}`;
+  if (!all.length) {
     $('players').innerHTML = '<li class="plist__empty">Todavía no hay nadie. Proyecta la mesa para que los invitados escaneen el código QR.</li>';
+    return;
+  }
+  if (!rows.length) {
+    $('players').innerHTML = '<li class="plist__empty">Nadie coincide con esa búsqueda. Prueba con otra parte del nombre.</li>';
     return;
   }
   const open = link.state.phase === 'open';
